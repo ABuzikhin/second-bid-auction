@@ -8,6 +8,8 @@ use App\Contract\BuyerInterface;
 
 class Buyer implements BuyerInterface
 {
+    private int $id;
+
     /** @var array<Bid> */
     private array $bids;
 
@@ -27,5 +29,10 @@ class Buyer implements BuyerInterface
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
     }
 }

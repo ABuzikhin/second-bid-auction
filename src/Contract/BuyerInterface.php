@@ -8,6 +8,8 @@ use App\Model\Bid;
 
 interface BuyerInterface
 {
+    public function getId(): int;
+
     public function getName(): string;
 
     /**

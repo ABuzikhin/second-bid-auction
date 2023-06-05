@@ -16,19 +16,42 @@ class LogicTest
     {
         $this->describe('Test the main logic of the algorithm.');
 
-        $auctionItem = new AuctionItem(new ItemPrice(100));
+        $auctionItem = $this->makeAuctionItem();
 
-        $buyerA = $this->makeBuyer('A', [110, 130]);
-        $buyerB = $this->makeBuyer('B');
-        $buyerC = $this->makeBuyer('C', [125]);
-        $buyerD = $this->makeBuyer('D', [105, 115, 90]);
-        $buyerE = $this->makeBuyer('E', [132, 135, 140]);
+        $buyerA = $this->makeBuyer(1, 'A', [110, 130]);
+        $buyerB = $this->makeBuyer(2, 'B');
+        $buyerC = $this->makeBuyer(3, 'C', [125]);
+        $buyerD = $this->makeBuyer(4, 'D', [105, 115, 90]);
+        $buyerE = $this->makeBuyer(5, 'E', [132, 135, 140]);
 
         $service = new WinnerDetectorService();
 
         $result = $service->detectWinner($auctionItem, [$buyerE, $buyerD, $buyerC, $buyerB, $buyerA]);
 
         $this->assertNotNull($result);
+        $this->assertEquals(5, $result->getBuyer()->getId(), 'Buyer ID does not match.');
+        $this->assertEquals('E', $result->getBuyer()->getName(), 'Buyer name does not match.');
+        $this->assertEquals(130, $result->getBid()->getValue(), 'Bid value does not match.');
+    }
+
+    public function testMainLogicWithSimilarBuyers(): void
+    {
+        $this->describe('Test extra case - Some buyers have similar names.');
+
+        $auctionItem = $this->makeAuctionItem();
+
+        $buyerA = $this->makeBuyer(1, 'E', [110, 130]);
+        $buyerB = $this->makeBuyer(2, 'E');
+        $buyerC = $this->makeBuyer(3, 'C', [125]);
+        $buyerD = $this->makeBuyer(4, 'D', [105, 115, 90]);
+        $buyerE = $this->makeBuyer(5, 'E', [132, 135, 140]);
+
+        $service = new WinnerDetectorService();
+
+        $result = $service->detectWinner($auctionItem, [$buyerE, $buyerD, $buyerC, $buyerB, $buyerA]);
+
+        $this->assertNotNull($result);
+        $this->assertEquals(5, $result->getBuyer()->getId(), 'Buyer ID does not match.');
         $this->assertEquals('E', $result->getBuyer()->getName(), 'Buyer name does not match.');
         $this->assertEquals(130, $result->getBid()->getValue(), 'Bid value does not match.');
     }
@@ -37,11 +60,11 @@ class LogicTest
     {
         $this->describe('Test extra case - No Bids.');
 
-        $auctionItem = new AuctionItem(new ItemPrice(100));
+        $auctionItem = $this->makeAuctionItem();
 
-        $buyerA = $this->makeBuyer('A');
-        $buyerB = $this->makeBuyer('B');
-        $buyerC = $this->makeBuyer('C');
+        $buyerA = $this->makeBuyer(1, 'A');
+        $buyerB = $this->makeBuyer(2, 'B');
+        $buyerC = $this->makeBuyer(3, 'C');
 
         $service = new WinnerDetectorService();
 
@@ -54,7 +77,7 @@ class LogicTest
     {
         $this->describe('Test extra case - No Buyers');
 
-        $auctionItem = new AuctionItem(new ItemPrice(100));
+        $auctionItem = $this->makeAuctionItem();
 
         $service = new WinnerDetectorService();
         $result  = $service->detectWinner($auctionItem, []);
@@ -66,18 +89,19 @@ class LogicTest
     {
         $this->describe('Test extra case - two buyers suggest equal secondary bid');
 
-        $auctionItem = new AuctionItem(new ItemPrice(100));
+        $auctionItem = $this->makeAuctionItem();
 
-        $buyerA = $this->makeBuyer('A', [135, 130]);
-        $buyerB = $this->makeBuyer('B');
-        $buyerC = $this->makeBuyer('C', [135]);
-        $buyerE = $this->makeBuyer('E', [140]);
+        $buyerA = $this->makeBuyer(1, 'A', [135, 130]);
+        $buyerB = $this->makeBuyer(2, 'B');
+        $buyerC = $this->makeBuyer(3, 'C', [135]);
+        $buyerE = $this->makeBuyer(4, 'E', [140]);
 
         $service = new WinnerDetectorService();
 
         $result = $service->detectWinner($auctionItem, [$buyerE, $buyerC, $buyerB, $buyerA]);
 
         $this->assertNotNull($result);
+        $this->assertEquals(4, $result->getBuyer()->getId(), 'Buyer ID does not match.');
         $this->assertEquals('E', $result->getBuyer()->getName(), 'Buyer name does not match.');
         $this->assertEquals(135, $result->getBid()->getValue(), 'Bid value does not match.');
     }
@@ -86,14 +110,15 @@ class LogicTest
     {
         $this->describe('Test extra case - single buyer case.');
 
-        $auctionItem = new AuctionItem(new ItemPrice(100));
+        $auctionItem = $this->makeAuctionItem();
 
-        $buyerA  = $this->makeBuyer('A', [135, 130]);
+        $buyerA  = $this->makeBuyer(8, 'A', [135, 130]);
         $service = new WinnerDetectorService();
 
         $result = $service->detectWinner($auctionItem, [$buyerA]);
 
         $this->assertNotNull($result);
+        $this->assertEquals(8, $result->getBuyer()->getId(), 'Buyer ID does not match.');
         $this->assertEquals('A', $result->getBuyer()->getName(), 'Buyer name does not match.');
         $this->assertEquals(100, $result->getBid()->getValue(), 'Bid value does not match.');
     }
@@ -102,16 +127,17 @@ class LogicTest
     {
         $this->describe('Test extra case - all other buyers provide bid lower then reserved price.');
 
-        $auctionItem = new AuctionItem(new ItemPrice(100));
+        $auctionItem = $this->makeAuctionItem();
 
-        $buyerA = $this->makeBuyer('A', [90, 89]);
-        $buyerB = $this->makeBuyer('B', [101, 50]);
-        $buyerC = $this->makeBuyer('C', [70, 60]);
+        $buyerA = $this->makeBuyer(1, 'A', [90, 89]);
+        $buyerB = $this->makeBuyer(2, 'B', [101, 50]);
+        $buyerC = $this->makeBuyer(3, 'C', [70, 60]);
 
         $service = new WinnerDetectorService();
 
         $result = $service->detectWinner($auctionItem, [$buyerA, $buyerB, $buyerC]);
 
+        $this->assertEquals(2, $result->getBuyer()->getId(), 'Buyer ID does not match.');
         $this->assertEquals('B', $result->getBuyer()->getName(), 'Buyer name does not match.');
         $this->assertEquals(100, $result->getBid()->getValue(), 'Bid value does not match.');
     }
@@ -120,12 +146,12 @@ class LogicTest
     {
         $this->describe('Test extra case - two or more buyers suggest equals highest bid.');
 
-        $auctionItem = new AuctionItem(new ItemPrice(100));
+        $auctionItem = $this->makeAuctionItem();
 
-        $buyerA = $this->makeBuyer('A', [90, 101]);
-        $buyerB = $this->makeBuyer('B', [101, 50]);
-        $buyerC = $this->makeBuyer('C', [70, 60]);
-        $buyerD = $this->makeBuyer('B', [98, 99, 101]);
+        $buyerA = $this->makeBuyer(1, 'A', [90, 101]);
+        $buyerB = $this->makeBuyer(2, 'B', [101, 50]);
+        $buyerC = $this->makeBuyer(3, 'C', [70, 60]);
+        $buyerD = $this->makeBuyer(4, 'B', [98, 99, 101]);
 
         $service = new WinnerDetectorService();
 
@@ -135,10 +161,14 @@ class LogicTest
     }
 
 
-    protected function makeBuyer(string $name, array $bids = []): Buyer
+    protected function makeBuyer(int $id, string $name, array $bids = []): Buyer
     {
+        $buyer = new Buyer($name);
+
         if ([] === $bids) {
-            return new Buyer($name);
+            $this->updateId($id, Buyer::class, $buyer);
+
+            return $buyer;
         }
 
         $array = [];
@@ -146,7 +176,18 @@ class LogicTest
             $array[] = new Bid($bid);
         }
 
-        return new Buyer($name, $array);
+        $buyer = new Buyer($name, $array);
+        $this->updateId($id, Buyer::class, $buyer);
+
+        return $buyer;
+    }
+
+    protected function makeAuctionItem(int $id = 1, int $itemPrice = 100): AuctionItem
+    {
+        $item =  new AuctionItem(new ItemPrice($itemPrice));
+        $this->updateId($id, AuctionItem::class, $item);
+
+        return $item;
     }
 
     private function assertEquals(
@@ -182,5 +223,13 @@ class LogicTest
     private function describe(string $message): void
     {
         echo $message . PHP_EOL;
+    }
+
+    private function updateId(int $id, string $className, mixed $buyer): void
+    {
+        $reflectionProperty = new \ReflectionProperty($className, 'id');
+
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($buyer, $id);
     }
 }

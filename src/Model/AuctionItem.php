@@ -9,6 +9,8 @@ use App\Contract\MoneyInterface;
 
 class AuctionItem implements HasReservePriceInterface
 {
+    private int $id;
+
     public function __construct(
         private readonly ItemPrice $reservePrice
     ) {}
@@ -16,5 +18,10 @@ class AuctionItem implements HasReservePriceInterface
     public function getReservePrice(): MoneyInterface
     {
         return $this->reservePrice;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
     }
 }
